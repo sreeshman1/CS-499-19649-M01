@@ -50,8 +50,8 @@ export default function EditTripPage() {
       };
       fetchTripData();
     } else {
-        setError('No trip code provided.');
-        setInitialLoading(false);
+      setError('No trip code provided.');
+      setInitialLoading(false);
     }
   }, [tripCode, router]);
 
@@ -67,11 +67,11 @@ export default function EditTripPage() {
 
     const cookies = parseCookies();
     const token = cookies['travlr-token'];
-     if (!token) {
-        setError('You must be logged in to edit a trip.');
-        setLoading(false);
-        router.push('/login');
-        return;
+    if (!token) {
+      setError('You must be logged in to edit a trip.');
+      setLoading(false);
+      router.push('/login');
+      return;
     }
 
     try {

@@ -1,6 +1,5 @@
 import Link from 'next/link';
 
-// Helper function to format date (optional, can use a library like date-fns)
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
   try {
@@ -27,7 +26,7 @@ const TripCard = ({ trip, isAdmin }) => { // isAdmin prop to show/hide edit butt
         src={trip.image?.startsWith('http') ? trip.image : `/images/${trip.image || 'placeholder.jpg'}`}
         alt={trip.name || 'Trip image'}
         className="w-full h-48 object-cover rounded-t-lg mb-4"
-        onError={(e) => { e.target.onerror = null; e.target.src='[https://placehold.co/600x400/E2E8F0/AAAAAA?text=Image+Not+Found](https://placehold.co/600x400/E2E8F0/AAAAAA?text=Image+Not+Found)'; }}
+        onError={(e) => { e.target.onerror = null; e.target.src = '[https://placehold.co/600x400/E2E8F0/AAAAAA?text=Image+Not+Found](https://placehold.co/600x400/E2E8F0/AAAAAA?text=Image+Not+Found)'; }}
       />
       <div className="flex-grow">
         <h2 className="text-xl font-semibold text-blue-700 mb-2">{trip.name}</h2>

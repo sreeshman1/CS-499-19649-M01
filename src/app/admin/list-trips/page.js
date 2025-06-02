@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import TripCard from '@/components/TripCard'; // Re-use TripCard, pass isAdmin prop
+import TripCard from '../components/TripCard'; 
 import { parseCookies } from 'nookies';
 import { useRouter } from 'next/navigation';
 

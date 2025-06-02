@@ -5,7 +5,6 @@ export default function HomePage() {
   return (
     <div className="text-center py-10">
       <div className="mb-8">
-        {/* Ensure this image is in your /public/images folder */}
         <img src="/images/sea-sound.jpg" alt="Beach" className="mx-auto rounded-lg shadow-lg max-w-3xl w-full" onError={(e) => { e.target.onerror = null; e.target.src='[https://placehold.co/800x400/E2E8F0/AAAAAA?text=Welcome+Image](https://placehold.co/800x400/E2E8F0/AAAAAA?text=Welcome+Image)'; }} />
       </div>
       <h1 className="text-4xl font-bold text-gray-800 mb-4">Enjoy the Summer with Us!</h1>
@@ -26,7 +25,6 @@ export default function HomePage() {
         </Link>
       </div>
 
-      {/* Example of how you might list some featured content, similar to your original #main section */}
       <div className="mt-16 max-w-4xl mx-auto">
         <h2 className="text-2xl font-semibold text-gray-700 mb-6">Latest News & Testimonials</h2>
         <div className="grid md:grid-cols-2 gap-8">

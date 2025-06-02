@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "seed": "node lib/seed.js"
+    "seed": "node src/lib/seed.js"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.1.7",

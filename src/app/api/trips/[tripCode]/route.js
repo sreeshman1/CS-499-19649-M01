@@ -1,6 +1,6 @@
-import dbConnect from '../../../../lib/mongodb';
-import Trip from '@/models/Trip';
-import { NextResponse } from 'next/server';
+import dbConnect from '../../../../lib/mongodb'; ///route.js]
+import Trip from '../../../../models/Trip'; ///route.js]
+import { NextResponse } from 'next/server'; ///route.js]
 
 export async function GET(request, { params }) {
   const { tripCode } = params;
@@ -24,10 +24,18 @@ export async function PUT(request, { params }) {
     await dbConnect();
     const body = await request.json();
 
+    if (body.durationNights !== undefined && (typeof body.durationNights !== 'number' || body.durationNights < 1)) {
+      return NextResponse.json({ message: 'durationNights must be a positive number.' }, { status: 400 });
+    }
+    if (body.rating !== undefined && (typeof body.rating !== 'number' || body.rating < 1 || body.rating > 5)) {
+      return NextResponse.json({ message: 'rating must be a number between 1 and 5.' }, { status: 400 });
+    }
+
+
     const updatedTrip = await Trip.findOneAndUpdate(
       { code: tripCode },
       body,
-      { new: true, runValidators: true } // new: true returns the updated document
+      { new: true, runValidators: true }
     );
 
     if (!updatedTrip) {
