@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+body {
+  /* background: #ffb744 url(/images/bg-body.jpg) repeat left bottom; */ /* Public images need to be in /public */
+  font-family: "Times New Roman", Times, serif; /* This will be overridden by Tailwind's font-sans unless you customize Tailwind */
+}
