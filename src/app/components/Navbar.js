@@ -1,74 +1,108 @@
-'use client'; // This component uses client-side hooks (useState, useEffect for auth state)
+'use client';
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { parseCookies, destroyCookie } from 'nookies';
-import { useRouter } from 'next/navigation'; // Use next/navigation for App Router
+import { useRouter } from 'next/navigation';
+import { Container, Header, Group, Button, Image, Burger, Text, Box, Drawer } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
 
 export default function Navbar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [opened, { toggle, close }] = useDisclosure(false);
   const router = useRouter();
 
   useEffect(() => {
-    const cookies = parseCookies();
-    const token = cookies['travlr-token'];
-    setIsLoggedIn(!!token);
-  }, []);
+    const checkAuthStatus = () => {
+      const cookies = parseCookies();
+      const token = cookies['travlr-token'];
+      setIsLoggedIn(!!token);
+    };
+    checkAuthStatus();
+
+    // Listen for route changes to re-check auth status
+    const handleRouteChange = () => checkAuthStatus();
+    // next/navigation does not have events like 'routeChangeComplete'.
+    // A simple interval or more complex state management would be needed for instant updates.
+    // For this case, we rely on page reloads or manual refreshes after login/logout.
+
+    return () => {
+      // Cleanup if any listeners were added
+    };
+  }, [router]);
+
 
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
-      destroyCookie(null, 'travlr-token', { path: '/' }); // Ensure cookie is cleared client-side too
+      destroyCookie(null, 'travlr-token', { path: '/' });
       setIsLoggedIn(false);
-      router.push('/login'); // Redirect to login page
-      router.refresh(); // Force a refresh to update server components if needed
+      router.push('/login');
+      router.refresh();
     } catch (error) {
       console.error('Logout failed:', error);
     }
   };
 
-  return (
-    <nav className="bg-blue-600 text-white p-4 shadow-md">
-      <div className="container mx-auto flex justify-between items-center">
-        <Link href="/" legacyBehavior>
-          <a className="text-2xl font-bold hover:text-blue-200 transition-colors">
-            <img src="/images/logo.png" alt="Travlr Logo" className="h-10 inline mr-2" onError={(e) => { e.target.style.display='none'; e.target.nextSibling.style.display='inline'; }} />
-            <span style={{display: 'none'}}>Travlr Getaways</span>
-          </a>
-        </Link>
-        <div className="space-x-4">
-          <Link href="/" legacyBehavior><a className="hover:text-blue-200">Home</a></Link>
-          <Link href="/trips" legacyBehavior><a className="hover:text-blue-200">Travel</a></Link>
-          <Link href="/rooms" legacyBehavior><a className="hover:text-blue-200">Rooms</a></Link>
-          <Link href="/meals" legacyBehavior><a className="hover:text-blue-200">Meals</a></Link>
-          <Link href="/about" legacyBehavior><a className="hover:text-blue-200">About</a></Link>
-          <Link href="/contact" legacyBehavior><a className="hover:text-blue-200">Contact</a></Link>
+  const navLinks = (
+    <>
+      <Button component={Link} href="/" variant="subtle" onClick={close}>Home</Button>
+      <Button component={Link} href="/trips" variant="subtle" onClick={close}>Travel</Button>
+      <Button component={Link} href="/about" variant="subtle" onClick={close}>About</Button>
+      <Button component={Link} href="/contact" variant="subtle" onClick={close}>Contact</Button>
+      {isLoggedIn && (
+        <>
+          <Button component={Link} href="/admin/list-trips" variant="subtle" onClick={close}>Admin Trips</Button>
+          <Button component={Link} href="/admin/add-trip" variant="subtle" onClick={close}>Add Trip</Button>
+        </>
+      )}
+    </>
+  );
 
-          {/* Admin Links - conditionally render based on auth state */}
-          {isLoggedIn && (
-            <>
-              <Link href="/admin/list-trips" legacyBehavior><a className="hover:text-blue-200">Admin Trips</a></Link>
-              <Link href="/admin/add-trip" legacyBehavior><a className="hover:text-blue-200">Add Trip</a></Link>
-            </>
-          )}
-        </div>
-        <div>
+  return (
+    <Box
+      component="header"
+      py="xs"
+      px="md"
+      sx={(theme) => ({
+        backgroundColor: theme.colorScheme === 'dark' ? theme.colors.dark[6] : theme.colors.gray[0],
+        borderBottom: `1px solid ${theme.colorScheme === 'dark' ? theme.colors.dark[5] : theme.colors.gray[2]}`,
+        height: 60,
+      })}
+    >
+      <Container size="lg" style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+        <Group style={{ flex: 1 }}>
+          <Image src="/images/logo.png" alt="Travlr Logo" height={40} width="auto" />
+          <Text size="xl" fw={700} component={Link} href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+            Travlr Getaways
+          </Text>
+        </Group>
+
+        <Group spacing="xs" visibleFrom="sm">
+          {navLinks}
+        </Group>
+
+        <Group visibleFrom="sm">
           {isLoggedIn ? (
-            <button
-              onClick={handleLogout}
-              className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-colors"
-            >
-              Logout
-            </button>
+            <Button color="red" onClick={handleLogout}>Logout</Button>
           ) : (
-            <Link href="/login" legacyBehavior>
-              <a className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition-colors">
-                Login
-              </a>
-            </Link>
+            <Button component={Link} href="/login" color="green">Login</Button>
           )}
-        </div>
-      </div>
-    </nav>
+        </Group>
+
+        <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
+
+        <Drawer opened={opened} onClose={close} title="Menu" padding="xl" size="sm" position="right">
+          <Group direction="column" align="stretch">
+            {navLinks}
+            {isLoggedIn ? (
+              <Button color="red" onClick={() => { handleLogout(); close(); }}>Logout</Button>
+            ) : (
+              <Button component={Link} href="/login" color="green" onClick={close}>Login</Button>
+            )}
+          </Group>
+        </Drawer>
+      </Container>
+    </Box>
   );
 }

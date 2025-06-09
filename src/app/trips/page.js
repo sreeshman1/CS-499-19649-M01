@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import TripCard from '../components/TripCard';
+import { Container, Title, Grid, TextInput, NumberInput, Select, Button, Group, Text, Paper, Loader, Center } from '@mantine/core';
 
 export default function TripsPage() {
   const [allTrips, setAllTrips] = useState([]);
@@ -13,7 +14,7 @@ export default function TripsPage() {
     searchTerm: '',
     minPrice: '',
     maxPrice: '',
-    minDurationNights: '', // Changed from minDuration
+    minDurationNights: '',
     minRating: '',
   });
 
@@ -21,7 +22,7 @@ export default function TripsPage() {
     async function fetchTrips() {
       setLoading(true);
       setError('');
-      const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000/api'}/trips`;
+      const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL || '/api'}/trips`;
       try {
         const res = await fetch(apiUrl, { cache: 'no-store' });
         if (!res.ok) {
@@ -48,8 +49,7 @@ export default function TripsPage() {
     setSortConfig({ key, direction });
   };
 
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
+  const handleFilterChange = (name, value) => {
     setFilters(prevFilters => ({
       ...prevFilters,
       [name]: value,
@@ -63,20 +63,20 @@ export default function TripsPage() {
     if (filters.searchTerm) {
       processedTrips = processedTrips.filter(trip =>
         (trip.name && trip.name.toLowerCase().includes(filters.searchTerm.toLowerCase())) ||
-        (trip.resort && trip.resort.toLowerCase().includes(filters.searchTerm.toLowerCase())) || // Keep searching resort string
+        (trip.resort && trip.resort.toLowerCase().includes(filters.searchTerm.toLowerCase())) ||
         (trip.description && trip.description.toLowerCase().includes(filters.searchTerm.toLowerCase()))
       );
     }
-    if (filters.minPrice) {
+    if (filters.minPrice !== '' && filters.minPrice !== null) {
       processedTrips = processedTrips.filter(trip => parseFloat(trip.perPerson) >= parseFloat(filters.minPrice));
     }
-    if (filters.maxPrice) {
+    if (filters.maxPrice !== '' && filters.maxPrice !== null) {
       processedTrips = processedTrips.filter(trip => parseFloat(trip.perPerson) <= parseFloat(filters.maxPrice));
     }
-    if (filters.minDurationNights) { // Using new field
+    if (filters.minDurationNights !== '' && filters.minDurationNights !== null) {
       processedTrips = processedTrips.filter(trip => trip.durationNights >= parseInt(filters.minDurationNights, 10));
     }
-    if (filters.minRating) { // Using new field
+    if (filters.minRating) {
       processedTrips = processedTrips.filter(trip => trip.rating >= parseInt(filters.minRating, 10));
     }
 
@@ -90,11 +90,11 @@ export default function TripsPage() {
             valA = parseFloat(a.perPerson);
             valB = parseFloat(b.perPerson);
             break;
-          case 'rating': // Changed from resortRating to rating
+          case 'rating':
             valA = a.rating;
             valB = b.rating;
             break;
-          case 'durationNights': // Changed from duration to durationNights
+          case 'durationNights':
             valA = a.durationNights;
             valB = b.durationNights;
             break;
@@ -105,91 +105,101 @@ export default function TripsPage() {
             break;
         }
 
-        if (valA < valB) {
-          return sortConfig.direction === 'ascending' ? -1 : 1;
-        }
-        if (valA > valB) {
-          return sortConfig.direction === 'ascending' ? 1 : -1;
-        }
+        if (valA < valB) return sortConfig.direction === 'ascending' ? -1 : 1;
+        if (valA > valB) return sortConfig.direction === 'ascending' ? 1 : -1;
         return 0;
       });
     }
     return processedTrips;
   }, [allTrips, sortConfig, filters]);
 
-  if (loading) return <p className="text-center text-gray-500 mt-10">Loading trips...</p>;
-  if (error) return <p className="text-center text-red-500 mt-10">Error: {error}</p>;
+  if (loading) return <Center style={{ height: '50vh' }}><Loader /></Center>;
+  if (error) return <Text color="red" ta="center" my="xl">Error: {error}</Text>;
+
+  const getSortIndicator = (key) => {
+    if (sortConfig.key !== key) return null;
+    return sortConfig.direction === 'ascending' ? ' ▲' : ' ▼';
+  };
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold text-center my-8 text-gray-800">Our Amazing Trips</h1>
-      <div className="mb-8 p-4 bg-gray-50 rounded-lg shadow">
-        <h2 className="text-xl font-semibold mb-4 text-gray-700">Filter & Sort Options</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-          <input
-            type="text"
-            name="searchTerm"
-            placeholder="Search keyword (name, resort...)"
-            value={filters.searchTerm}
-            onChange={handleFilterChange}
-            className="p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-          />
-          <input
-            type="number"
-            name="minPrice"
-            placeholder="Min price (e.g., 500)"
-            value={filters.minPrice}
-            onChange={handleFilterChange}
-            className="p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-          />
-          <input
-            type="number"
-            name="maxPrice"
-            placeholder="Max price (e.g., 1500)"
-            value={filters.maxPrice}
-            onChange={handleFilterChange}
-            className="p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-          />
-          <input
-            type="number"
-            name="minDurationNights" // Changed from minDuration
-            placeholder="Min duration (nights)"
-            value={filters.minDurationNights}
-            onChange={handleFilterChange}
-            className="p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-          />
-          <select
-            name="minRating"
-            value={filters.minRating}
-            onChange={handleFilterChange}
-            className="p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="">Filter by Min Resort Rating</option>
-            <option value="1">1 Star & Up</option>
-            <option value="2">2 Stars & Up</option>
-            <option value="3">3 Stars & Up</option>
-            <option value="4">4 Stars & Up</option>
-            <option value="5">5 Stars</option>
-          </select>
-        </div>
-        <div className="mt-4 flex flex-wrap gap-2 items-center">
-          <span className="text-sm font-medium text-gray-700 mr-2">Sort by:</span>
-          <button onClick={() => handleSort('name')} className={`p-2 rounded text-sm ${sortConfig.key === 'name' ? 'bg-blue-700 text-white' : 'bg-blue-500 text-white hover:bg-blue-600'}`}>Name {sortConfig.key === 'name' ? (sortConfig.direction === 'ascending' ? '▲' : '▼') : ''}</button>
-          <button onClick={() => handleSort('perPerson')} className={`p-2 rounded text-sm ${sortConfig.key === 'perPerson' ? 'bg-blue-700 text-white' : 'bg-blue-500 text-white hover:bg-blue-600'}`}>Price {sortConfig.key === 'perPerson' ? (sortConfig.direction === 'ascending' ? '▲' : '▼') : ''}</button>
-          <button onClick={() => handleSort('durationNights')} className={`p-2 rounded text-sm ${sortConfig.key === 'durationNights' ? 'bg-blue-700 text-white' : 'bg-blue-500 text-white hover:bg-blue-600'}`}>Duration {sortConfig.key === 'durationNights' ? (sortConfig.direction === 'ascending' ? '▲' : '▼') : ''}</button>
-          <button onClick={() => handleSort('rating')} className={`p-2 rounded text-sm ${sortConfig.key === 'rating' ? 'bg-blue-700 text-white' : 'bg-blue-500 text-white hover:bg-blue-600'}`}>Rating {sortConfig.key === 'rating' ? (sortConfig.direction === 'ascending' ? '▲' : '▼') : ''}</button>
-        </div>
-      </div>
+    <Container size="lg" my="xl">
+      <Title order={1} ta="center" mb="xl">Our Amazing Trips</Title>
+
+      <Paper withBorder shadow="md" p="lg" radius="md" mb="xl">
+        <Title order={3} mb="lg">Filter & Sort Options</Title>
+        <Grid>
+          <Grid.Col span={{ base: 12, md: 6, lg: 4 }}>
+            <TextInput
+              label="Search Keyword"
+              placeholder="Name, resort, description..."
+              value={filters.searchTerm}
+              onChange={(e) => handleFilterChange('searchTerm', e.currentTarget.value)}
+            />
+          </Grid.Col>
+          <Grid.Col span={{ base: 6, lg: 2 }}>
+            <NumberInput
+              label="Min Price"
+              placeholder="e.g., 500"
+              value={filters.minPrice}
+              onChange={(value) => handleFilterChange('minPrice', value)}
+              min={0}
+            />
+          </Grid.Col>
+          <Grid.Col span={{ base: 6, lg: 2 }}>
+            <NumberInput
+              label="Max Price"
+              placeholder="e.g., 1500"
+              value={filters.maxPrice}
+              onChange={(value) => handleFilterChange('maxPrice', value)}
+              min={0}
+            />
+          </Grid.Col>
+          <Grid.Col span={{ base: 6, lg: 2 }}>
+            <NumberInput
+              label="Min Duration"
+              placeholder="Nights"
+              value={filters.minDurationNights}
+              onChange={(value) => handleFilterChange('minDurationNights', value)}
+              min={1}
+            />
+          </Grid.Col>
+          <Grid.Col span={{ base: 6, lg: 2 }}>
+            <Select
+              label="Min Resort Rating"
+              placeholder="Any rating"
+              value={filters.minRating}
+              onChange={(value) => handleFilterChange('minRating', value)}
+              data={[
+                { value: '', label: 'Any Rating' },
+                { value: '1', label: '1 Star & Up' },
+                { value: '2', label: '2 Stars & Up' },
+                { value: '3', label: '3 Stars & Up' },
+                { value: '4', label: '4 Stars & Up' },
+                { value: '5', label: '5 Stars' },
+              ]}
+            />
+          </Grid.Col>
+        </Grid>
+        <Group mt="md">
+          <Text fw={500}>Sort by:</Text>
+          <Button variant={sortConfig.key === 'name' ? 'filled' : 'light'} onClick={() => handleSort('name')}>Name{getSortIndicator('name')}</Button>
+          <Button variant={sortConfig.key === 'perPerson' ? 'filled' : 'light'} onClick={() => handleSort('perPerson')}>Price{getSortIndicator('perPerson')}</Button>
+          <Button variant={sortConfig.key === 'durationNights' ? 'filled' : 'light'} onClick={() => handleSort('durationNights')}>Duration{getSortIndicator('durationNights')}</Button>
+          <Button variant={sortConfig.key === 'rating' ? 'filled' : 'light'} onClick={() => handleSort('rating')}>Rating{getSortIndicator('rating')}</Button>
+        </Group>
+      </Paper>
 
       {filteredAndSortedTrips.length === 0 ? (
-        <p className="text-center text-gray-500 mt-10">No trips match your current filters. Please try adjusting them.</p>
+        <Text ta="center" my="xl">No trips match your current filters. Please try adjusting them.</Text>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Grid>
           {filteredAndSortedTrips.map((trip) => (
-            <TripCard key={trip.code || trip._id} trip={trip} isAdmin={false} />
+            <Grid.Col key={trip.code || trip._id} span={{ base: 12, sm: 6, lg: 4 }}>
+              <TripCard trip={trip} isAdmin={false} />
+            </Grid.Col>
           ))}
-        </div>
+        </Grid>
       )}
-    </div>
+    </Container>
   );
 }

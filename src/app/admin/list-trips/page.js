@@ -1,8 +1,9 @@
-'use client'; // Making this a client component for now for easier state management / interaction
+'use client';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import TripCard from '../components/TripCard'; 
+import TripCard from '../../components/TripCard';
+import { Container, Title, Button, Grid, Loader, Text, Group, Center } from '@mantine/core';
 import { parseCookies } from 'nookies';
 import { useRouter } from 'next/navigation';
 
@@ -16,7 +17,7 @@ export default function AdminListTripsPage() {
     // Client-side auth check
     const cookies = parseCookies();
     if (!cookies['travlr-token']) {
-      router.push('/login'); // Redirect if not authenticated
+      router.push('/login');
       return;
     }
 
@@ -43,33 +44,33 @@ export default function AdminListTripsPage() {
   }, [router]);
 
   if (loading) {
-    return <p className="text-center text-gray-500 mt-10">Loading trips...</p>;
+    return <Center style={{ height: '50vh' }}><Loader /></Center>;
   }
 
   if (error) {
-    return <p className="text-center text-red-500 mt-10">Error loading trips: {error}</p>;
+    return <Text c="red" ta="center" my="xl">Error loading trips: {error}</Text>;
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Manage Trips</h1>
-        <Link href="/admin/add-trip" legacyBehavior>
-          <a className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition-colors">
-            Add New Trip
-          </a>
-        </Link>
-      </div>
+    <Container size="lg" my="xl">
+      <Group justify="space-between" mb="xl">
+        <Title order={1}>Manage Trips</Title>
+        <Button component={Link} href="/admin/add-trip" color="green">
+          Add New Trip
+        </Button>
+      </Group>
 
       {trips.length === 0 ? (
-        <p className="text-center text-gray-500">No trips found. Add one!</p>
+        <Text ta="center" my="xl">No trips found. Add one!</Text>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Grid>
           {trips.map((trip) => (
-            <TripCard key={trip.code || trip._id} trip={trip} isAdmin={true} />
+            <Grid.Col key={trip.code || trip._id} span={{ base: 12, sm: 6, lg: 4 }}>
+              <TripCard trip={trip} isAdmin={true} />
+            </Grid.Col>
           ))}
-        </div>
+        </Grid>
       )}
-    </div>
+    </Container>
   );
 }

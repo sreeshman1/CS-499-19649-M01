@@ -2,33 +2,38 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useForm } from '@mantine/form';
+import { Container, Title, Paper, TextInput, Textarea, NumberInput, Button, Notification, Alert } from '@mantine/core';
+import { DatePickerInput } from '@mantine/dates';
 import { parseCookies } from 'nookies';
+import { IconX, IconCheck } from '@tabler/icons-react';
 
 export default function AddTripPage() {
-  const [formData, setFormData] = useState({
-    code: '',
-    name: '',
-    length: '',
-    durationNights: '', // Added
-    start: '',
-    resort: '',
-    rating: '', // Added
-    perPerson: '',
-    image: '',
-    description: '',
-  });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleChange = (e) => {
-    const { name, value, type } = e.target;
-    setFormData({ ...formData, [name]: type === 'number' ? (value === '' ? '' : parseFloat(value)) : value });
-  };
+  const form = useForm({
+    initialValues: {
+      code: '', name: '', length: '', durationNights: null, start: null,
+      resort: '', rating: null, perPerson: '', image: '', description: '',
+    },
+    validate: {
+      code: (value) => (value.trim().length === 0 ? 'Trip code is required' : null),
+      name: (value) => (value.trim().length === 0 ? 'Trip name is required' : null),
+      length: (value) => (value.trim().length === 0 ? 'Length is required' : null),
+      durationNights: (value) => (value === null || value <= 0 ? 'Duration must be a positive number' : null),
+      start: (value) => (value === null ? 'Start date is required' : null),
+      resort: (value) => (value.trim().length === 0 ? 'Resort is required' : null),
+      rating: (value) => (value === null || value < 1 || value > 5 ? 'Rating must be between 1 and 5' : null),
+      perPerson: (value) => (value.trim().length === 0 ? 'Price is required' : null),
+      image: (value) => (value.trim().length === 0 ? 'Image is required' : null),
+      description: (value) => (value.trim().length === 0 ? 'Description is required' : null),
+    }
+  });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (values) => {
     setError('');
     setSuccess('');
     setLoading(true);
@@ -43,23 +48,11 @@ export default function AddTripPage() {
       return;
     }
 
-    // Ensure numerical fields are numbers or null/undefined if not set (model will validate)
-    const payload = {
-      ...formData,
-      durationNights: formData.durationNights === '' ? undefined : Number(formData.durationNights),
-      rating: formData.rating === '' ? undefined : Number(formData.rating),
-      perPerson: formData.perPerson // Assuming perPerson is handled as string, if number convert as well
-    };
-
-
     try {
       const res = await fetch('/api/trips', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(payload), // Use payload
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(values),
       });
 
       const data = await res.json();
@@ -69,10 +62,7 @@ export default function AddTripPage() {
       }
 
       setSuccess('Trip added successfully!');
-      setFormData({ // Reset form
-        code: '', name: '', length: '', durationNights: '', start: '', resort: '', rating: '', perPerson: '', image: '', description: '',
-      });
-      router.push('/admin/list-trips');
+      setTimeout(() => router.push('/admin/list-trips'), 1500);
 
     } catch (err) {
       setError(err.message);
@@ -82,64 +72,26 @@ export default function AddTripPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-xl mt-10">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">Add New Trip</h1>
-      {error && <p className="text-red-500 bg-red-100 p-3 rounded mb-4 text-sm">{error}</p>}
-      {success && <p className="text-green-500 bg-green-100 p-3 rounded mb-4 text-sm">{success}</p>}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Iterate over a structured array to control order and types */}
-        {[
-          { name: 'code', label: 'Trip Code', type: 'text', placeholder: 'e.g., TRP001' },
-          { name: 'name', label: 'Trip Name', type: 'text', placeholder: 'e.g., Amazing Reef Adventure' },
-          { name: 'length', label: 'Length (Display)', type: 'text', placeholder: 'e.g., 7 nights / 8 days' },
-          { name: 'durationNights', label: 'Duration (Nights)', type: 'number', placeholder: 'e.g., 7' },
-          { name: 'start', label: 'Start Date', type: 'date' },
-          { name: 'resort', label: 'Resort (Display)', type: 'text', placeholder: 'e.g., Ocean Paradise, 5 stars' },
-          { name: 'rating', label: 'Rating (1-5)', type: 'number', placeholder: 'e.g., 5', min: 1, max: 5, step: 1 },
-          { name: 'perPerson', label: 'Price Per Person', type: 'text', placeholder: 'e.g., 1299.99' }, // Keep as text if schema is string
-          { name: 'image', label: 'Image Filename', type: 'text', placeholder: 'e.g., reef_adventure.jpg' },
-          { name: 'description', label: 'Description', type: 'textarea' },
-        ].map((field) => (
-          <div key={field.name}>
-            <label htmlFor={field.name} className="block text-sm font-medium text-gray-700 capitalize">
-              {field.label || field.name.replace(/([A-Z])/g, ' $1')}
-            </label>
-            {field.type === 'textarea' ? (
-              <textarea
-                id={field.name}
-                name={field.name}
-                value={formData[field.name]}
-                onChange={handleChange}
-                required
-                rows="3"
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                placeholder={`Enter ${field.label || field.name}`}
-              />
-            ) : (
-              <input
-                type={field.type}
-                id={field.name}
-                name={field.name}
-                value={formData[field.name]}
-                onChange={handleChange}
-                required
-                min={field.min}
-                max={field.max}
-                step={field.step}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                placeholder={field.placeholder || `Enter ${field.label || field.name}`}
-              />
-            )}
-          </div>
-        ))}
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md shadow-sm transition duration-150 ease-in-out disabled:opacity-50"
-        >
-          {loading ? 'Adding Trip...' : 'Add Trip'}
-        </button>
-      </form>
-    </div>
+    <Container size="sm" my="xl">
+      <Paper withBorder shadow="md" p={30} radius="md">
+        <Title order={2} ta="center" mb="xl">Add New Trip</Title>
+        {error && <Alert icon={<IconX size="1rem" />} title="Error" color="red" withCloseButton onClose={() => setError('')} mb="md">{error}</Alert>}
+        {success && <Notification icon={<IconCheck size="1.1rem" />} color="teal" title="Success" onClose={() => setSuccess('')} mb="md">{success}</Notification>}
+
+        <form onSubmit={form.onSubmit(handleSubmit)}>
+          <TextInput label="Trip Code" placeholder="e.g., TRP001" required {...form.getInputProps('code')} />
+          <TextInput mt="md" label="Trip Name" placeholder="e.g., Amazing Reef Adventure" required {...form.getInputProps('name')} />
+          <TextInput mt="md" label="Length (Display)" placeholder="e.g., 7 nights / 8 days" required {...form.getInputProps('length')} />
+          <NumberInput mt="md" label="Duration (Nights)" placeholder="e.g., 7" required min={1} {...form.getInputProps('durationNights')} />
+          <DatePickerInput mt="md" label="Start Date" placeholder="Pick a date" required {...form.getInputProps('start')} />
+          <TextInput mt="md" label="Resort (Display)" placeholder="e.g., Ocean Paradise, 5 stars" required {...form.getInputProps('resort')} />
+          <NumberInput mt="md" label="Rating (1-5)" placeholder="e.g., 5" required min={1} max={5} step={1} {...form.getInputProps('rating')} />
+          <TextInput mt="md" label="Price Per Person" placeholder="e.g., 1299.99" required {...form.getInputProps('perPerson')} />
+          <TextInput mt="md" label="Image Filename" placeholder="e.g., reef_adventure.jpg" required {...form.getInputProps('image')} />
+          <Textarea mt="md" label="Description" placeholder="Trip details" required minRows={3} {...form.getInputProps('description')} />
+          <Button type="submit" fullWidth mt="xl" loading={loading}>Add Trip</Button>
+        </form>
+      </Paper>
+    </Container>
   );
 }

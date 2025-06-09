@@ -1,72 +1,86 @@
-'use client'; // For form handling
+'use client';
 
 import { useState } from 'react';
+import { useForm } from '@mantine/form';
+import { TextInput, Textarea, Button, Paper, Title, Container, Grid, Text, Notification, Box } from '@mantine/core';
+import { IconCheck } from '@tabler/icons-react';
 
 export default function ContactPage() {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    subject: '',
-    message: '',
-  });
   const [status, setStatus] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  const form = useForm({
+    initialValues: {
+      name: '',
+      email: '',
+      subject: '',
+      message: '',
+    },
+    validate: {
+      name: (value) => (value.trim().length < 2 ? 'Name must have at least 2 letters' : null),
+      email: (value) => (/^\S+@\S+$/.test(value) ? null : 'Invalid email'),
+      subject: (value) => (value.trim().length === 0 ? 'Subject is required' : null),
+      message: (value) => (value.trim().length < 10 ? 'Message must be at least 10 characters long' : null),
+    },
+  });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = (values) => {
+    setLoading(true);
     setStatus('Sending...');
-    console.log('Form data submitted:', formData);
+    console.log('Form data submitted:', values);
+    // Simulate API call
     setTimeout(() => {
       setStatus('Message sent successfully!');
-      setFormData({ name: '', email: '', subject: '', message: '' });
+      setLoading(false);
+      form.reset();
+      setTimeout(() => setStatus(''), 3000); // Clear status after 3 seconds
     }, 1000);
   };
 
   return (
-    <div className="bg-white p-8 rounded-lg shadow-lg max-w-4xl mx-auto my-10">
-      <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">Contact Us</h1>
-      <div className="grid md:grid-cols-2 gap-10">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name:</label>
-            <input type="text" id="name" name="name" value={formData.name} onChange={handleChange} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" />
-          </div>
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email:</label>
-            <input type="email" id="email" name="email" value={formData.email} onChange={handleChange} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" />
-          </div>
-          <div>
-            <label htmlFor="subject" className="block text-sm font-medium text-gray-700">Subject:</label>
-            <input type="text" id="subject" name="subject" value={formData.subject} onChange={handleChange} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" />
-          </div>
-          <div>
-            <label htmlFor="message" className="block text-sm font-medium text-gray-700">Message:</label>
-            <textarea id="message" name="message" value={formData.message} onChange={handleChange} rows="4" required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
-          </div>
-          <div>
-            <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md shadow-sm transition duration-150 ease-in-out">
-              Send Message
-            </button>
-          </div>
-          {status && <p className="text-center mt-4 text-sm">{status}</p>}
-        </form>
-        <div className="space-y-4 text-gray-700">
-          <h2 className="text-2xl font-semibold text-blue-600">Travlr Getaways</h2>
-          <p>
-            <span className="font-medium">Address:</span> 123 Lorem Ipsum Cove, Sed Ut City, LI 12345
-          </p>
-          <p>
-            <span className="font-medium">Telephone Number:</span> 1-800-999-9999
-          </p>
-          <p>
-            <span className="font-medium">Fax Number:</span> 1-800-111-1111
-          </p>
-        </div>
-      </div>
-    </div>
+    <Container size="lg" my="xl">
+      <Paper shadow="md" p="xl" radius="md" withBorder>
+        <Title order={1} ta="center" mb="xl">Contact Us</Title>
+        <Grid>
+          <Grid.Col span={{ base: 12, md: 7 }}>
+            <form onSubmit={form.onSubmit(handleSubmit)}>
+              <TextInput label="Name" placeholder="Your name" required {...form.getInputProps('name')} />
+              <TextInput mt="md" label="Email" placeholder="Your email" required {...form.getInputProps('email')} />
+              <TextInput mt="md" label="Subject" placeholder="Subject" required {...form.getInputProps('subject')} />
+              <Textarea mt="md" label="Message" placeholder="Your message" required minRows={4} {...form.getInputProps('message')} />
+              <Button type="submit" fullWidth mt="xl" loading={loading}>
+                Send Message
+              </Button>
+            </form>
+            {status && (
+              <Notification
+                icon={status === 'Message sent successfully!' ? <IconCheck size="1.1rem" /> : null}
+                color={status === 'Message sent successfully!' ? 'teal' : 'blue'}
+                title="Status"
+                mt="md"
+                onClose={() => setStatus('')}
+                loading={loading}
+              >
+                {status}
+              </Notification>
+            )}
+          </Grid.Col>
+          <Grid.Col span={{ base: 12, md: 5 }}>
+            <Box pl={{ base: 0, md: 'lg' }} mt={{ base: 'xl', md: 0 }}>
+              <Title order={3} c="blue.6">Travlr Getaways</Title>
+              <Text mt="md">
+                <Text component="span" fw={500}>Address:</Text> 123 Lorem Ipsum Cove, Sed Ut City, LI 12345
+              </Text>
+              <Text mt="xs">
+                <Text component="span" fw={500}>Telephone:</Text> 1-800-999-9999
+              </Text>
+              <Text mt="xs">
+                <Text component="span" fw={500}>Fax:</Text> 1-800-111-1111
+              </Text>
+            </Box>
+          </Grid.Col>
+        </Grid>
+      </Paper>
+    </Container>
   );
 }

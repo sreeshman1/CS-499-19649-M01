@@ -1,5 +1,6 @@
-import './globals.css'; // Import Tailwind CSS base styles
+import { MantineProvider, ColorSchemeScript } from '@mantine/core';
 import Navbar from './components/Navbar';
+import '@mantine/core/styles.css';
 
 export const metadata = {
   title: 'Travlr Getaways Next.js',
@@ -10,13 +11,14 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
+        <ColorSchemeScript />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </head>
-      <body className="bg-gray-100 font-sans">
-        <Navbar /> 
-        <main className="container mx-auto p-4">
-          {children}
-        </main>
-        {/* <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" async /> */}
+      <body>
+        <MantineProvider>
+          <Navbar />
+          <main>{children}</main>
+        </MantineProvider>
       </body>
     </html>
   );
